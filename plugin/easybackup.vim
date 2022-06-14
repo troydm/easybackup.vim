@@ -16,6 +16,10 @@ else
         let g:easybackup_dir = $HOME . "/.backups"
     endif
 
+    if !exists("g:easybackup_retain")
+        let g:easybackup_retain = 10
+    endif
+
     " Functions {{{
     function! s:GetDir(dir)
         " hash code generation, commented for now
@@ -27,10 +31,23 @@ else
         return g:easybackup_dir . substitute(substitute(a:dir,'\([^^]\)/','\1_', 'g'), '$/', '', '')
     endfunction
 
-    function! s:EasyBackup(dir)
+    function! s:GetBackups(dir, name)
+        return sort(readdir(a:dir, { name -> name =~ a:name . '_\d\{4}_\w\{3}_\d\{1,2}_\d\{2}:\d\{2}:\d\{2}'}))
+    endfunction
+
+    function! s:EasyBackup(dir, name)
         let dir = s:GetDir(a:dir)
         if !isdirectory(dir)
             call mkdir(dir, 'p', 0o755)
+        endif
+        let backups = s:GetBackups(dir, a:name)
+        if len(backups) >= g:easybackup_retain
+            let c = len(backups) - g:easybackup_retain + 1
+            let i = 0
+            while i < c
+                call delete(dir . '/' . backups[i])
+                let i += 1
+            endwhile
         endif
         exe 'set backupext=_' . strftime("%Y_%b_%d_%T")
         exe 'set backupdir=' .  dir
@@ -42,7 +59,7 @@ else
             return
         endif
         let dir = s:GetDir(a:dir)
-        let backups = readdir(dir, { name -> name =~ a:name . '_\d\{4}_\w\{3}_\d\{1,2}_\d\{2}:\d\{2}:\d\{2}'}, #{sort: 'case'})
+        let backups = s:GetBackups(dir, a:name)
         if len(backups) == 0
             echo 'No backups'
             return
@@ -72,7 +89,7 @@ else
 
     set writebackup
     set backup
-    autocmd BufWritePre * :call s:EasyBackup(expand('<afile>:p:h'))
+    autocmd BufWritePre * :call s:EasyBackup(expand('<afile>:p:h'), expand('<afile>:p:t'))
     command! -nargs=0 EasyRestore call <SID>EasyRestore(expand('%:p:h'), expand('%:p:t'))
     let s:easybackup_loaded = 1
 endif

@@ -22,13 +22,13 @@ else
 
     " Functions {{{
     function! s:GetDir(dir)
-        " hash code generation, commented for now
-        " let i = 5348
-        " for c in a:dir
-        "     let cn = char2nr(c)
-        "     let i = (cn * 32) + cn + i
-        " endfor
-        return g:easybackup_dir . substitute(substitute(a:dir,'\([^^]\)/','\1_', 'g'), '$/', '', '')
+        " hash code generation
+        let i = 5348
+        for c in a:dir
+            let cn = char2nr(c)
+            let i = (cn * 32) + cn + i
+        endfor
+        return g:easybackup_dir . '/' . fnamemodify(a:dir, ':t') . '-' . string(i)
     endfunction
 
     function! s:GetBackups(dir, name)
@@ -77,7 +77,7 @@ else
             let backup = readfile(dir . '/' . backups[r-1])
             normal! gg_dG
             exe backup->appendbufline('%', 0)
-            echo string(r) . ') backup loaded from file ' . backups[r-1]
+            echo 'Backup loaded from file ' . backups[r-1]
         elseif r == len(backups) + 1
             silent edit!
             echo 'Current file restored'
@@ -98,3 +98,4 @@ let &cpo = s:save_cpo
 unlet s:save_cpo
 
 " vim: set sw=4 sts=4 et fdm=marker:
+

@@ -32,6 +32,10 @@ else
     endfunction
 
     function! s:GetBackups(dir, name)
+        if !isdirectory(a:dir)
+            return []
+        endif
+        echo a:dir
         return sort(readdir(a:dir, { name -> name =~ a:name . '_\d\{4}_\w\{3}_\d\{1,2}_\d\{2}:\d\{2}:\d\{2}'}))
     endfunction
 
